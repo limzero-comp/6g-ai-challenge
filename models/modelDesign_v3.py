@@ -64,6 +64,23 @@ def _complex(re, im):
     return torch.complex(re.float(), im.float())
 
 
+def _complex_solve(a, b):
+    """Solve a @ x = b for complex a, b.
+
+    torch.linalg.solve has no complex kernel on MPS, so there an exactly
+    equivalent real 2n x 2n block system is solved instead; other devices use
+    the native complex path with identical numerics.
+    """
+    if a.device.type != "mps":
+        return torch.linalg.solve(a, b)
+    ar, ai = a.real, a.imag
+    block = torch.cat((torch.cat((ar, -ai), -1), torch.cat((ai, ar), -1)), -2)
+    rhs = torch.cat((b.real, b.imag), -2)
+    solution = torch.linalg.solve(block, rhs)
+    rows = a.shape[-1]
+    return _complex(solution[..., :rows, :], solution[..., rows:, :])
+
+
 def _channel_features(h):
     batch = h.shape[0]
     flat = h.reshape(batch, NUM_RX * NUM_TX, NUM_RE)
@@ -209,7 +226,7 @@ class Precoder(nn.Module):
         alpha = (F.softplus(self.log_dl_weight) * noise_dl +
                  F.softplus(self.log_ul_weight) * feedback_uncertainty * row_energy + 1e-3)
         alpha = alpha.repeat_interleave(NUM_RX, dim=1)[:, None, :]
-        inverse_times_g = torch.linalg.solve(gram + torch.diag_embed(alpha), g)
+        inverse_times_g = _complex_solve(gram + torch.diag_embed(alpha), g)
         w = inverse_times_g.conj().transpose(-2, -1)  # B,F,T,U*R
         # A conjugated RZF solution is G^H (G G^H + A)^-1 since A is real.
         per_user = h.reshape(batch, NUM_RE, NUM_UE, NUM_RX * NUM_TX)
