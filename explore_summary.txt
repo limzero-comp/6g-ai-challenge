@@ -1,0 +1,25 @@
+loading data...
+shape (100000, 2, 2, 16, 144), dtype complex64, storage fp16 (real/imag)
+raw real dtype float16, min -6.3086, max 6.8164
+
+[1] basic: E|h|^2 = 1.7890, |h| percentiles 1/50/99 = [0.111 1.029 3.192]
+per-TX-antenna mean power: [1.791 1.79  1.79  1.79  1.791 1.789 1.786 1.784 1.789 1.79  1.79  1.79
+ 1.789 1.789 1.788 1.788]
+per-RX-antenna mean power: [1.786 1.792]
+LoS check: max |E[h]|/(std/sqrt(N)) = 2.6 (0.00% entries > 4sigma; ~5% expected if purely random)
+
+[2] delay: RMS delay spread = 24.39 taps (grid 144); PDP > -20dB taps = 6
+taps 0-5 dB relative: [  0.   -4.7 -10.  -14.1 -17.3 -20.1]
+
+[3] freq corr: |rho(offset)| first 5 = [0.999 0.996 0.992 0.986 0.98 ]; rho(47) = 0.659, rho(48) = 0.654
+coherence offset (|rho|<0.5): -1 subcarriers (subband = 48 sc)
+
+[4] TX spatial corr: mean |rho(a,b)| = 0.253, adjacent antennas = 0.756
+
+[5] SVD (user0, per sc): mean s1^2 = 45.21, mean s2^2 = 12.16
+s2/s1 percentiles 10/50/90 = [0.305 0.515 0.756]; frac s2/s1 < 0.3 (single-stream dominant): 0.095
+per-sample across-sc fluctuation of s1^2 (std/mean): 10/50/90 pct = [0.03 0.17 0.39]
+
+[6] MU: frac of user1-beam energy inside user2 channel subspace: 10/50/90 pct = [0.027 0.151 0.405]
+frac samples-SC with interference > 0.5 (bad for pairing): 0.044
+cross-user |rho| (vec H1 vs vec H2): 10/50/90 pct = [0.081 0.24  0.481]
