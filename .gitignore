@@ -1,0 +1,18 @@
+# 数据与产物（体积大或可再生成）
+data_train.rar
+data_train/
+*.pth
+modelSubmit/
+
+# 系统文件
+.DS_Store
+
+# 与比赛无关的本地工具与服务器信息（含 SSH 端点，不入库）
+codex-model
+CODEX_MODEL.md
+remote-server.md
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
