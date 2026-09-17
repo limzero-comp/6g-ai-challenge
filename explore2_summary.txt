@@ -1,0 +1,35 @@
+loading data...
+subsample (5000, 2, 2, 16, 144)
+
+[B] peak delay tap fraction (taps 0-7): [0.6948 0.2232 0.0512 0.0164 0.0069 0.0032 0.0015 0.001 ]
+energy centroid per link: mean 0.72, std 0.81, 95pct 2.14
+
+[A] PCA on delay-domain vec(H), 16 taps kept (2048 real dims)
+  dims for 90.0% energy: 123
+  dims for 95.0% energy: 188
+  dims for 99.0% energy: 387
+  dims for 99.9% energy: 718
+  PCA top- 192 dims -> NMSE = 0.04819 (13.2 dB)
+  PCA top-  96 dims -> NMSE = 0.13938 (8.6 dB)
+  PCA top-  48 dims -> NMSE = 0.29256 (5.3 dB)
+  PCA top-  24 dims -> NMSE = 0.48026 (3.2 dB)
+
+[C] dominant-pol agreement between users: 0.49; dominant-azimuth-bin agreement: 0.16
+azimuth spectrum normalized entropy: mean 0.979 (1.0 = isotropic)
+pol0 power share: mean 0.497 (0.5 = balanced)
+building Monte-Carlo BER tables (QPSK/16/64/256QAM)...
+
+[D] perfect-CSI scheme comparison (competition scoring)
+scheme                       eff  fair(p10)  final=0.7e+0.3f
+MU-ZF fixed rate           56.92      52.36            55.55
+MU-ZF adaptive             57.17      52.45            55.75
+SU greedy adaptive         54.27      50.00            52.99
+Oracle switch adaptive     57.17      52.45            55.75
+
+MU-ZF + ideal coding       74.50      52.12            67.78
+SU fullpower + ideal       66.37      50.00            61.46
+Oracle + ideal coding      75.16      50.00            67.61
+capacity-oracle picks MU in 76.1% of (sample,sc)
+
+ gain check: median zf1=23.4, zf2=23.2, su(s1^2)=54.6
+oracle picks MU in 100.0% of (sample,sc)
