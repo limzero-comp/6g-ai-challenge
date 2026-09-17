@@ -1,5 +1,7 @@
 # 训练数据探索报告
 
+> **历史报告，部分重要结论已修正（2026-09-18）。** 当前数据分析见 [reports/data_audit.md](reports/data_audit.md)，问题定位见 [reports/review_notes.md](reports/review_notes.md)。原F10将两UE合并后与单UE预算比较并遗漏截断误差；F11的FFT轴错误；F12的QAM逆映射少了 `/2` 且p10聚合口径错误。以下数值保留供追溯，不能作为当前模型上下界或方案排除依据。
+
 > 基于 `data_train/H_train.npz`（100,000 样本 × [2 UE, 2 RX, 16 TX, 144 SC]，real/imag 以 **float16** 存储）。
 > 复现：`python data_explore.py`（CPU，约 2 分钟），图表见 `figs/`。
 

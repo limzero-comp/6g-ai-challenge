@@ -1,0 +1,17 @@
+{
+  "design": "models/modelDesign_v1.py",
+  "seed": 20260918,
+  "steps": 30000,
+  "batch_size": 64,
+  "lr": 0.0003,
+  "weight_decay": 0.0001,
+  "warmup_steps": 3000,
+  "score_weight": 0.1,
+  "tail_weight": 0.03,
+  "csi_weight": 0.01,
+  "eval_every": 1000,
+  "val_samples": 2000,
+  "val_repeats": 2,
+  "eval_batch_size": 16,
+  "log_every": 100
+}

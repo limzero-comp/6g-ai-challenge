@@ -1,0 +1,42 @@
+{
+  "trained": false,
+  "optimizer_steps": 0,
+  "validation": "Synthetic contract/gradient tests, not model quality or competition performance",
+  "device": "CPU",
+  "python": "3.11.13",
+  "torch": "2.8.0",
+  "numpy": "1.26.4",
+  "threads": 2,
+  "variants": {
+    "v1": {
+      "parameters": 850742,
+      "per_module": {
+        "encoder": 395480,
+        "transmitter": 253798,
+        "receiver": 201464
+      },
+      "batch1_full_link_ms": 11.993201399066795,
+      "benchmark_iterations": 30
+    },
+    "v2": {
+      "parameters": 1002463,
+      "per_module": {
+        "encoder": 395480,
+        "transmitter": 347031,
+        "receiver": 259952
+      },
+      "batch1_full_link_ms": 15.045897231902927,
+      "benchmark_iterations": 30
+    },
+    "v3": {
+      "parameters": 1002463,
+      "per_module": {
+        "encoder": 395480,
+        "transmitter": 347031,
+        "receiver": 259952
+      },
+      "batch1_full_link_ms": 14.960908330976963,
+      "benchmark_iterations": 30
+    }
+  }
+}
