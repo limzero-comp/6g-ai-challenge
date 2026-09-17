@@ -16,4 +16,9 @@ remote-server.md
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+
+# 新研究流程生成的训练产物与固定数据索引
+experiments/
+splits/
 .venv/
+submit_*.zip

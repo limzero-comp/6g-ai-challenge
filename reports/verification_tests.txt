@@ -1,0 +1,14 @@
+test_exact_score_and_zero_llr_semantics (test_research.DataAndScoreTests.test_exact_score_and_zero_llr_semantics) ... ok
+test_group_disjointness (test_research.DataAndScoreTests.test_group_disjointness) ... ok
+test_mmap_npz_and_split_identity (test_research.DataAndScoreTests.test_mmap_npz_and_split_identity) ... ok
+test_normalization (test_research.DataAndScoreTests.test_normalization) ... ok
+test_qam_inverse_and_high_snr (test_research.DataAndScoreTests.test_qam_inverse_and_high_snr) ... ok
+test_candidates (test_research.ModelTests.test_candidates) ... v1: contracts, official parity, gradients without update, symmetry, serialization OK (850742 parameters)
+v2: contracts, official parity, gradients without update, symmetry, serialization OK (1002463 parameters)
+v3: contracts, official parity, gradients without update, symmetry, serialization OK (1002463 parameters)
+ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 1.078s
+
+OK

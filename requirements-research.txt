@@ -1,0 +1,6 @@
+# Python 3.9 compatible candidate models; tests ran locally with Python 3.11.
+numpy==1.26.4
+torch==2.8.0
+matplotlib>=3.7,<3.10
+# Only the preserved official baseline needs einops.
+einops>=0.8,<0.9
