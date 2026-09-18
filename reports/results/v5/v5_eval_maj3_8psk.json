@@ -1,0 +1,103 @@
+{
+  "efficiency": 62.45583724975586,
+  "fairness_p10": 51.64930725097656,
+  "score": 59.213878250122065,
+  "channel_rows": 1000,
+  "repeats": 2,
+  "seed": 271828,
+  "batch_size": 16,
+  "seconds": 1.1900156660049106,
+  "pairing_note": "Use identical rows, seed, repeats AND batch_size for paired model comparison",
+  "milliseconds_per_two_user_block": 0.5950078330024553,
+  "timing_note": "Includes data transfer/loading; hardware-specific, not platform timing",
+  "per_user": [
+    {
+      "efficiency": 62.22634506225586,
+      "fairness_p10": 51.5625,
+      "score": 59.0271915435791
+    },
+    {
+      "efficiency": 62.68532943725586,
+      "fairness_p10": 51.82291793823242,
+      "score": 59.426605987548825
+    }
+  ],
+  "snr_bins": {
+    "[-20,-15)": {
+      "efficiency": 51.98002624511719,
+      "fairness_p10": 49.73958206176758,
+      "score": 51.3078929901123,
+      "count": 505
+    },
+    "[-15,-10)": {
+      "efficiency": 53.89636993408203,
+      "fairness_p10": 50.82465362548828,
+      "score": 52.97485504150391,
+      "count": 536
+    },
+    "[-10,-5)": {
+      "efficiency": 57.07136535644531,
+      "fairness_p10": 52.06597137451172,
+      "score": 55.56974716186523,
+      "count": 489
+    },
+    "[-5,0)": {
+      "efficiency": 60.11791229248047,
+      "fairness_p10": 53.47222137451172,
+      "score": 58.12420501708984,
+      "count": 480
+    },
+    "[0,5)": {
+      "efficiency": 64.59513092041016,
+      "fairness_p10": 55.64236068725586,
+      "score": 61.90929985046387,
+      "count": 493
+    },
+    "[5,10)": {
+      "efficiency": 68.34574890136719,
+      "fairness_p10": 58.15972137451172,
+      "score": 65.28994064331054,
+      "count": 513
+    },
+    "[10,15)": {
+      "efficiency": 71.27537536621094,
+      "fairness_p10": 63.37673568725586,
+      "score": 68.90578346252441,
+      "count": 488
+    },
+    "[15,20)": {
+      "efficiency": 73.04705047607422,
+      "fairness_p10": 68.53298950195312,
+      "score": 71.69283218383788,
+      "count": 496
+    }
+  },
+  "prefix_lengths": {
+    "1152": 4000
+  },
+  "cluster_bootstrap_95pct": {
+    "efficiency": [
+      62.21171817779541,
+      62.68763952255249
+    ],
+    "fairness_p10": [
+      51.5625,
+      51.82291793823242
+    ],
+    "score": [
+      59.030356035232536,
+      59.40880812644958
+    ]
+  },
+  "split": "val",
+  "split_metadata": {
+    "seed": 20260918,
+    "mode": "random",
+    "groups": null,
+    "sampled_sha256": "28303736b72bd29286c8c4271f0ecc67aad643e19ff7f2b25d1bbc957a5421d0",
+    "n": 100000,
+    "warning": "Sampled fingerprint, not a complete file hash; no scenario IDs supplied"
+  },
+  "design": "models/modelDesign_v5.py",
+  "weights": "experiments/v5_weights"
+}
