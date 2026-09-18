@@ -91,7 +91,7 @@ class ModelTests(unittest.TestCase):
         torch.set_num_threads(2)
 
     def test_candidates(self):
-        for version in (1, 2, 3):
+        for version in (1, 2, 3, 4):
             with self.subTest(version=version):
                 self.check_candidate(version)
 
@@ -167,7 +167,7 @@ class ModelTests(unittest.TestCase):
                 affected = ((z_before - z_after).abs().sum(-1) > 1e-7).sum()
                 self.assertGreater(int(affected), 100)
 
-        if version == 2:
+        if version in (2, 4):
             with self.assertRaises(ValueError):
                 link.receiver(y, h[:, 0], ctrl, snr[0])
             # A discarded suffix must not change the transmitted waveform.
@@ -179,6 +179,25 @@ class ModelTests(unittest.TestCase):
             with torch.no_grad():
                 changed_x, _ = link.transmitter(changed, feedback, snr)
             torch.testing.assert_close(x, changed_x)
+
+        if version == 4:
+            # Ladder tiers at representative own-SNR values.
+            probe = torch.tensor([-20.0, -10.0, -6.0, 0.0])
+            expected = torch.tensor([96, 192, 576, 1152])
+            torch.testing.assert_close(link.receiver.valid_lengths(probe), expected)
+            # Pilot REs carry constants: data bits may only move the waveform
+            # there through the per-sample global power normalization, i.e.
+            # up to one complex scalar per sample.
+            with torch.no_grad():
+                other_x, _ = link.transmitter([torch.randint(0, 2, (3, B_MAX)).float()
+                                                for _ in range(2)], feedback, snr)
+            pilot_re = design.PILOT_RE
+            own, other = x[:, :, pilot_re], other_x[:, :, pilot_re]
+            ratio = (own / other)[:, :1, :1]
+            torch.testing.assert_close(own, ratio * other, rtol=1e-4, atol=1e-6)
+            # ... while data REs do move beyond that scalar.
+            residual = (x - (x / other_x)[:, :1, :1] * other_x).abs()
+            self.assertGreater(float(residual[:, :, :5].sum()), 0.0)
 
         with tempfile.TemporaryDirectory() as tmp:
             copied = Path(tmp) / "modelDesign.py"
