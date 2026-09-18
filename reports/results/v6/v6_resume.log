@@ -1,0 +1,159 @@
++./analysis/v6_resume.sh:4> V3W=experiments/v3_mps_seed20260918/best 
++./analysis/v6_resume.sh:6> echo '=== stage A: m3 formal eval (val 2000x3 batch1) ==='
+=== stage A: m3 formal eval (val 2000x3 batch1) ===
++./analysis/v6_resume.sh:7> V6_M=3 .venv/bin/python -m research.evaluate --design models/modelDesign_v6.py --weights experiments/v6_finetune_m3/best --data data_train/H_train.npz --splits splits/random_seed20260918.npz --split val --samples 2000 --repeats 3 --batch-size 1 --device mps --out experiments/v6_m3_eval_formal.json
+{
+  "efficiency": 65.93840789794922,
+  "fairness_p10": 51.90972137451172,
+  "score": 61.729801940917966,
+  "channel_rows": 2000,
+  "repeats": 3,
+  "seed": 271828,
+  "batch_size": 1,
+  "seconds": 67.12863070799358,
+  "pairing_note": "Use identical rows, seed, repeats AND batch_size for paired model comparison",
+  "milliseconds_per_two_user_block": 11.18810511799893,
+  "timing_note": "Includes data transfer/loading; hardware-specific, not platform timing",
+  "per_user": [
+    {
+      "efficiency": 65.90988159179688,
+      "fairness_p10": 51.82291793823242,
+      "score": 61.68379249572754
+    },
+    {
+      "efficiency": 65.9669418334961,
+      "fairness_p10": 51.90972137451172,
+      "score": 61.74977569580078
+    }
+  ],
+  "snr_bins": {
+    "[-20,-15)": {
+      "efficiency": 51.956024169921875,
+      "fairness_p10": 49.13194274902344,
+      "score": 51.10879974365234,
+      "count": 1436
+    },
+    "[-15,-10)": {
+      "efficiency": 55.30719757080078,
+      "fairness_p10": 50.52083206176758,
+      "score": 53.87128791809082,
+      "count": 1512
+    },
+    "[-10,-5)": {
+      "efficiency": 60.819217681884766,
+      "fairness_p10": 53.02083206176758,
+      "score": 58.47970199584961,
+      "count": 1489
+    },
+    "[-5,0)": {
+      "efficiency": 66.07990264892578,
+      "fairness_p10": 57.98611068725586,
+      "score": 63.65176506042481,
+      "count": 1493
+    },
+    "[0,5)": {
+      "efficiency": 70.82710266113281,
+      "fairness_p10": 65.45138549804688,
+      "score": 69.21438751220703,
+      "count": 1601
+    },
+    "[5,10)": {
+      "efficiency": 73.31340026855469,
+      "fairness_p10": 70.22569274902344,
+      "score": 72.38708801269532,
+      "count": 1478
+    },
+    "[10,15)": {
+      "efficiency": 74.1252212524414,
+      "fairness_p10": 72.39583587646484,
+      "score": 73.60640563964843,
+      "count": 1472
+    },
+    "[15,20)": {
+      "efficiency": 74.35601043701172,
+      "fairness_p10": 73.09027862548828,
+      "score": 73.97629089355468,
+      "count": 1519
+    }
+  },
+  "prefix_lengths": {
+    "1152": 12000
+  },
+  "cluster_bootstrap_95pct": {
+    "efficiency": [
+      65.75518245697022,
+      66.08731994628906
+    ],
+    "fairness_p10": [
+      51.73611068725586,
+      51.99652862548828
+    ],
+    "score": [
+      61.56676298141479,
+      61.85379976272583
+    ]
+  },
+  "split": "val",
+  "split_metadata": {
+    "seed": 20260918,
+    "mode": "random",
+    "groups": null,
+    "sampled_sha256": "28303736b72bd29286c8c4271f0ecc67aad643e19ff7f2b25d1bbc957a5421d0",
+    "n": 100000,
+    "warning": "Sampled fingerprint, not a complete file hash; no scenario IDs supplied"
+  },
+  "design": "models/modelDesign_v6.py",
+  "weights": "experiments/v6_finetune_m3/best"
+}
++./analysis/v6_resume.sh:13> echo '=== stage B: ladder fine-tune (15k steps) ==='
+=== stage B: ladder fine-tune (15k steps) ===
++./analysis/v6_resume.sh:14> .venv/bin/python analysis/finetune_v6.py --m ladder --steps 15000 --out experiments/v6_finetune_ladder
+/Users/limzero/workspace/comp2026/6g-ai-challenge/analysis/finetune_v6.py:83: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:821.)
+  rec = {"step": step, "loss": float(loss), **stats}
+{"step": 1, "loss": 0.32722267508506775, "bce": 0.327206552028656, "soft_score": 0.5812762379646301, "soft_tail": 0.49960386753082275}
+{"step": 500, "loss": -0.029453635215759277, "bce": -0.05119571462273598, "soft_score": 0.549001157283783, "soft_tail": 0.4997740387916565}
+{"step": 1000, "loss": -0.014337414875626564, "bce": -0.05770375579595566, "soft_score": 0.5573066473007202, "soft_tail": 0.49967333674430847}
+{"step": 1500, "loss": 0.004813436418771744, "bce": -0.06013946235179901, "soft_score": 0.5606952905654907, "soft_tail": 0.4997173547744751}
+{"step": 2000, "loss": 0.002344365231692791, "bce": -0.06263427436351776, "soft_score": 0.5629170536994934, "soft_tail": 0.499769389629364}
+{"step": 2500, "loss": 0.00010363385081291199, "bce": -0.06480345129966736, "soft_score": 0.5657274723052979, "soft_tail": 0.5000172257423401}
+{"step": 2500, "val_score": 60.69093856811523, "eff": 64.6031265258789, "p10": 51.5625}
+Traceback (most recent call last):
+  File "/Users/limzero/workspace/comp2026/6g-ai-challenge/analysis/finetune_v6.py", line 106, in <module>
+    main()
+  File "/Users/limzero/workspace/comp2026/6g-ai-challenge/analysis/finetune_v6.py", line 98, in main
+    torch.save(getattr(link, name).state_dict(), out / "best" / f"{name}.pth")
+  File "/Users/limzero/workspace/comp2026/6g-ai-challenge/.venv/lib/python3.11/site-packages/torch/serialization.py", line 1002, in save
+    with _open_zipfile_writer(f) as opened_zipfile:
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/limzero/workspace/comp2026/6g-ai-challenge/.venv/lib/python3.11/site-packages/torch/serialization.py", line 864, in _open_zipfile_writer
+    return container(name_or_buffer)  # type: ignore[arg-type]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/limzero/workspace/comp2026/6g-ai-challenge/.venv/lib/python3.11/site-packages/torch/serialization.py", line 828, in __init__
+    torch._C.PyTorchFileWriter(
+RuntimeError: Parent directory experiments/v6_finetune_ladder/best does not exist.
++./analysis/v6_resume.sh:16> echo '=== stage C: ladder formal eval (val 2000x3 batch1) ==='
+=== stage C: ladder formal eval (val 2000x3 batch1) ===
++./analysis/v6_resume.sh:17> V6_M=ladder .venv/bin/python -m research.evaluate --design models/modelDesign_v6.py --weights experiments/v6_finetune_ladder/best --data data_train/H_train.npz --splits splits/random_seed20260918.npz --split val --samples 2000 --repeats 3 --batch-size 1 --device mps --out experiments/v6_ladder_eval_formal.json
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/limzero/workspace/comp2026/6g-ai-challenge/research/evaluate.py", line 127, in <module>
+    main()
+  File "/Users/limzero/workspace/comp2026/6g-ai-challenge/research/evaluate.py", line 114, in main
+    load_weights(link, args.weights, args.device)
+  File "/Users/limzero/workspace/comp2026/6g-ai-challenge/research/evaluate.py", line 93, in load_weights
+    state = torch.load(Path(directory) / (name + ".pth"), map_location=device, weights_only=True)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/limzero/workspace/comp2026/6g-ai-challenge/.venv/lib/python3.11/site-packages/torch/serialization.py", line 1565, in load
+    with _open_file_like(f, "rb") as opened_file:
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/limzero/workspace/comp2026/6g-ai-challenge/.venv/lib/python3.11/site-packages/torch/serialization.py", line 795, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/limzero/workspace/comp2026/6g-ai-challenge/.venv/lib/python3.11/site-packages/torch/serialization.py", line 776, in __init__
+    super().__init__(open(name, mode))  # noqa: SIM115
+                     ^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'experiments/v6_finetune_ladder/best/encoder.pth'
++./analysis/v6_resume.sh:23> echo '=== V6 RESUME DONE ==='
+=== V6 RESUME DONE ===
