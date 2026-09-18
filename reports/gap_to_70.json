@@ -1,0 +1,204 @@
+{
+  "provenance": {
+    "revision": "f8cc0fc273f7cfd9007577cac6838f837947ed97",
+    "metrics_path": "reports/results/v3/eval_val.json",
+    "training_steps_executed": 0,
+    "new_wireless_evaluations_executed": 0
+  },
+  "score_budget": {
+    "current": {
+      "efficiency": 68.1207275390625,
+      "fairness_p10": 49.47916793823242,
+      "score": 62.528259658813475
+    },
+    "target": 70.0,
+    "gap": 7.471740341186525,
+    "required_mean_with_current_p10": 78.79464231218611,
+    "required_mean_by_target_p10": {
+      "50": 78.57142857142857,
+      "52": 77.71428571428572,
+      "54": 76.85714285714286,
+      "55": 76.42857142857143,
+      "56": 76.00000000000001,
+      "58": 75.14285714285715,
+      "60": 74.28571428571429
+    },
+    "gain_from_p10_50_holding_mean_fixed": 0.15624961853027344,
+    "gain_from_p10_55_holding_mean_fixed": 1.6562496185302733,
+    "gain_if_all_scores_above_snr_cutoff_become_100_holding_p10_fixed": {
+      "0": 6.339972794278462,
+      "5": 3.6442845248540237,
+      "10": 1.997446340370178,
+      "15": 0.8973209456761677
+    },
+    "caution": "The high-SNR replacements hold p10 fixed; they do not simulate a new global quantile."
+  },
+  "formal_snr_bins": {
+    "[-20,-15)": {
+      "efficiency": 50.396488189697266,
+      "fairness_p10": 48.26388931274414,
+      "score": 49.75670852661132,
+      "count": 1436
+    },
+    "[-15,-10)": {
+      "efficiency": 51.55727005004883,
+      "fairness_p10": 48.35069274902344,
+      "score": 50.595296859741204,
+      "count": 1512
+    },
+    "[-10,-5)": {
+      "efficiency": 54.408607482910156,
+      "fairness_p10": 48.87152862548828,
+      "score": 52.747483825683595,
+      "count": 1489
+    },
+    "[-5,0)": {
+      "efficiency": 58.804866790771484,
+      "fairness_p10": 50.0,
+      "score": 56.16340675354004,
+      "count": 1493
+    },
+    "[0,5)": {
+      "efficiency": 71.13566589355469,
+      "fairness_p10": 58.33333206176758,
+      "score": 67.29496574401855,
+      "count": 1601
+    },
+    "[5,10)": {
+      "efficiency": 80.89884185791016,
+      "fairness_p10": 70.05208587646484,
+      "score": 77.64481506347656,
+      "count": 1478
+    },
+    "[10,15)": {
+      "efficiency": 87.18798065185547,
+      "fairness_p10": 79.08854675292969,
+      "score": 84.75815048217773,
+      "count": 1472
+    },
+    "[15,20)": {
+      "efficiency": 89.87317657470703,
+      "fairness_p10": 83.94097137451172,
+      "score": 88.09351501464843,
+      "count": 1519
+    }
+  },
+  "rate_policy_caps": {
+    "v2_lowest_tier": {
+      "snr": [
+        -20,
+        -15
+      ],
+      "population_fraction": 0.125,
+      "bits": 16,
+      "max_score": 50.69444444444444
+    },
+    "v4_lowest_tier": {
+      "snr": [
+        -20,
+        -14
+      ],
+      "population_fraction": 0.15,
+      "bits": 96,
+      "max_score": 54.166666666666664
+    },
+    "scope": "Population p10 cannot exceed a tier cap if >10% of UE blocks are in that tier."
+  },
+  "hamming74_source_compression": {
+    "source_bits": 7,
+    "payload_bits": 4,
+    "enumerated_sources": 128,
+    "codewords": 16,
+    "max_source_errors_if_payload_is_perfect": 1,
+    "payload_bsc_checks": {
+      "0.0": {
+        "source_accuracy_pct": 87.50000000000007,
+        "same_four_bit_budget_prefix_score_pct": 78.57142857142857
+      },
+      "0.01": {
+        "source_accuracy_pct": 86.12630000000163,
+        "same_four_bit_budget_prefix_score_pct": 78.0
+      },
+      "0.05": {
+        "source_accuracy_pct": 81.00178571428486,
+        "same_four_bit_budget_prefix_score_pct": 75.71428571428571
+      },
+      "0.1": {
+        "source_accuracy_pct": 75.3714285714282,
+        "same_four_bit_budget_prefix_score_pct": 72.85714285714285
+      },
+      "0.2": {
+        "source_accuracy_pct": 66.32857142857102,
+        "same_four_bit_budget_prefix_score_pct": 67.14285714285714
+      },
+      "0.5": {
+        "source_accuracy_pct": 50.0,
+        "same_four_bit_budget_prefix_score_pct": 50.0
+      }
+    },
+    "block_1152_with_four_direct_remainder_bits": {
+      "payload_bits": 660,
+      "mean_score_if_payload_is_perfect": 87.54340277777777
+    },
+    "caution": "Independent payload-bit BSC is a toy channel, not a measured wireless BER or score."
+  },
+  "majority_source_compression": [
+    {
+      "source_bits": 3,
+      "payload_bits": 1,
+      "accuracy_if_payload_is_perfect_pct": 75.0,
+      "prefix_with_same_payload_budget_pct": 66.66666666666666,
+      "payload_bsc_checks": {
+        "0": 75.0,
+        "0.05": 72.5,
+        "0.1": 70.0,
+        "0.2": 65.0,
+        "0.5": 50.0
+      },
+      "block_1152_with_direct_remainder": {
+        "payload_bits": 384,
+        "mean_score_if_payload_is_perfect": 75.0
+      }
+    },
+    {
+      "source_bits": 7,
+      "payload_bits": 1,
+      "accuracy_if_payload_is_perfect_pct": 65.625,
+      "prefix_with_same_payload_budget_pct": 57.14285714285714,
+      "payload_bsc_checks": {
+        "0": 65.625,
+        "0.05": 64.0625,
+        "0.1": 62.5,
+        "0.2": 59.375,
+        "0.5": 50.0
+      },
+      "block_1152_with_direct_remainder": {
+        "payload_bits": 168,
+        "mean_score_if_payload_is_perfect": 65.74435763888889
+      }
+    },
+    {
+      "source_bits": 15,
+      "payload_bits": 1,
+      "accuracy_if_payload_is_perfect_pct": 60.4736328125,
+      "prefix_with_same_payload_budget_pct": 53.333333333333336,
+      "payload_bsc_checks": {
+        "0": 60.4736328125,
+        "0.05": 59.42626953125,
+        "0.1": 58.37890624999999,
+        "0.2": 56.2841796875,
+        "0.5": 50.0
+      },
+      "block_1152_with_direct_remainder": {
+        "payload_bits": 88,
+        "mean_score_if_payload_is_perfect": 60.88536580403646
+      }
+    }
+  ],
+  "shared_5bit_association_protocol": {
+    "distinct_bin_pairs_verified": 992,
+    "same_bin_fallback_pairs": 32,
+    "fallback_probability_if_independent_uniform_snr": 0.03125,
+    "scope": "Finite protocol proof only; all same-bin cases require a real fallback."
+  }
+}
