@@ -22,3 +22,6 @@ experiments/
 splits/
 .venv/
 submit_*.zip
+
+# 文献调研克隆的参考仓库（不入库，见 reports/literature_survey_2026-09.md）
+third_party/
