@@ -102,7 +102,7 @@ def main():
             scale = h_own.abs().square().mean((1, 2, 3)).clamp_min(1e-10).sqrt()
             h_n = (h_own / scale[:, None, None, None])
             ref = torch.cat((h_n.real, h_n.imag), dim=-1).permute(0, 3, 1, 2) \
-                .reshape(h.shape[0], 144, NUM_RX * 16 * 2)
+                .reshape(h.shape[0], 144, 64)
             chest_losses = [(c - ref).square().mean() for c in hists]
             stats["chest_nmse"] = float(chest_losses[-1].detach())
             loss = loss + aux_weight * sum(chest_losses) / len(chest_losses)
