@@ -1,7 +1,7 @@
 {
   "design": "models/modelDesign_v8.py",
   "seed": 20260918,
-  "steps": 40000,
+  "steps": 60000,
   "batch_size": 64,
   "lr": 0.0002,
   "weight_decay": 0.0001,

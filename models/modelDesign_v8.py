@@ -251,8 +251,17 @@ class Precoder(nn.Module):
         acc = torch.zeros(batch, 3, NUM_UE, NUM_RX, NUM_TX, dtype=h.dtype, device=device)
         acc.index_add_(1, sub, hs)
         h_sub = acc / 48.0                                       # B,3,U,R,T
+        # Kimi spec: the subband Gram is the AVERAGE OF PER-RE GRAMS (first
+        # moment of h^H h), which retains the within-subband channel variance
+        # that RZF needs for interference suppression -- not the gram of the
+        # averaged channel.
+        hs4 = hs.reshape(batch, NUM_RE, NUM_UE * NUM_RX, NUM_TX)
+        gram_re = torch.einsum("brea,breb->brab", hs4, hs4.conj())
+        gram = torch.zeros(batch, 3, NUM_UE * NUM_RX, NUM_UE * NUM_RX,
+                           dtype=gram_re.dtype, device=gram_re.device)
+        gram.index_add_(1, sub, gram_re)
+        gram = gram / 48.0                                       # B,3,4,4
         g = h_sub.reshape(batch, 3, NUM_UE * NUM_RX, NUM_TX)
-        gram = g @ g.conj().transpose(-2, -1)                    # B,3,4,4
         snr_bu = snr.transpose(0, 1).float()                     # B,U
         noise_dl = torch.pow(10.0, -snr_bu / 10.0)
         noise_ul = torch.pow(10.0, -(snr_bu - SNR_UL_GAP_DB) / 10.0)
