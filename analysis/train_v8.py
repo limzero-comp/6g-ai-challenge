@@ -137,11 +137,12 @@ def main():
         csi_weight = config.get("csi_weight", 0.01)
         if csi_weight:
             estimate = aux["h_hat"]
-            perm = aux["user_perm"]
-            idx = perm.reshape(h.shape[0], 2, 1, 1, 1).expand(-1, -1, *h.shape[2:])
-            h_sorted = torch.gather(h, 1, idx)
-            nmse = (estimate - h_sorted).abs().square().sum((2, 3, 4)) \
-                / h_sorted.abs().square().sum((2, 3, 4)).clamp_min(1e-8)
+            target = h
+            if "user_perm" in aux:
+                idx = aux["user_perm"].reshape(h.shape[0], 2, 1, 1, 1).expand(-1, -1, *h.shape[2:])
+                target = torch.gather(h, 1, idx)
+            nmse = (estimate - target).abs().square().sum((2, 3, 4)) \
+                / target.abs().square().sum((2, 3, 4)).clamp_min(1e-8)
             loss = loss + csi_weight * nmse.mean()
             stats["csi_nmse"] = float(nmse.mean().detach())
         if not bool(torch.isfinite(loss)):
