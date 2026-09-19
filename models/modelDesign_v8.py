@@ -217,82 +217,6 @@ class Decoder(nn.Module):
 
 
 class Precoder(nn.Module):
-    """Subband-constant robust RZF (external notes' Kimi-line v6) with the v3
-    UE-shared residual and a zero-initialised per-stream gain MLP.
-
-    W is computed once per 48-SC subband from the subband-averaged decoder
-    estimate and broadcast to every RE of that subband, so each subband's four
-    pilot REs see exactly the same precoder as its data REs -- the
-    precondition for the receiver's pilot least-squares to be meaningful.
-    The gain MLP outputs log-ratios per stream; being multiplied into W before
-    the per-RE normalisation it acts as pure stream-power ratios and applies
-    to pilot and data REs alike.
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.log_dl_weight = nn.Parameter(torch.tensor(1.0))
-        self.log_ul_weight = nn.Parameter(torch.tensor(0.0))
-        self.correction = nn.Sequential(nn.Linear(64 * 2 + 3 * 2, 64), nn.GELU(),
-                                        nn.Linear(64, 64))
-        nn.init.zeros_(self.correction[-1].weight)
-        nn.init.zeros_(self.correction[-1].bias)
-        self.gain_head = nn.Sequential(nn.Linear(6, 64), nn.GELU(), nn.Linear(64, NUM_UE * NUM_RX))
-        nn.init.zeros_(self.gain_head[-1].weight)
-        nn.init.zeros_(self.gain_head[-1].bias)
-
-    def forward(self, h_hat, snr):
-        # h_hat: [B, UE, RX, TX, RE], snr: [UE, B].
-        batch = h_hat.shape[0]
-        device = h_hat.device
-        h = h_hat.permute(0, 4, 1, 2, 3).contiguous()            # B,F,U,R,T
-        hs = h.reshape(batch, NUM_RE, NUM_UE, NUM_RX, NUM_TX)
-        sub = torch.arange(NUM_RE, device=device) // 48
-        acc = torch.zeros(batch, 3, NUM_UE, NUM_RX, NUM_TX, dtype=h.dtype, device=device)
-        acc.index_add_(1, sub, hs)
-        h_sub = acc / 48.0                                       # B,3,U,R,T
-        # Kimi spec: the subband Gram is the AVERAGE OF PER-RE GRAMS (first
-        # moment of h^H h), which retains the within-subband channel variance
-        # that RZF needs for interference suppression -- not the gram of the
-        # averaged channel.
-        hs4 = hs.reshape(batch, NUM_RE, NUM_UE * NUM_RX, NUM_TX)
-        gram_re = torch.einsum("brea,breb->brab", hs4, hs4.conj())
-        gram = torch.zeros(batch, 3, NUM_UE * NUM_RX, NUM_UE * NUM_RX,
-                           dtype=gram_re.dtype, device=gram_re.device)
-        gram.index_add_(1, sub, gram_re)
-        gram = gram / 48.0                                       # B,3,4,4
-        g = h_sub.reshape(batch, 3, NUM_UE * NUM_RX, NUM_TX)
-        snr_bu = snr.transpose(0, 1).float()                     # B,U
-        noise_dl = torch.pow(10.0, -snr_bu / 10.0)
-        noise_ul = torch.pow(10.0, -(snr_bu - SNR_UL_GAP_DB) / 10.0)
-        feedback_uncertainty = noise_ul / (1.0 + noise_ul)
-        row_energy = h_sub.abs().square().sum(-1).mean((1, 3))   # B,U
-        alpha = (F.softplus(self.log_dl_weight) * noise_dl +
-                 F.softplus(self.log_ul_weight) * feedback_uncertainty * row_energy + 1e-3)
-        alpha = alpha.repeat_interleave(NUM_RX, dim=1)[:, None, :]
-        w = _complex_solve(gram + torch.diag_embed(alpha), g)    # B,3,4,T
-        w = w.conj().transpose(-2, -1)                           # B,3,T,4
-        per_user = h_sub.reshape(batch, 3, NUM_UE, NUM_RX * NUM_TX)
-        features = torch.cat((per_user.real, per_user.imag), -1)
-        symmetric_context = features.mean(2, keepdim=True).expand_as(features)
-        snr_features = _snr_features(snr_bu)[:, None].expand(-1, 3, -1, -1)
-        snr_context = snr_features.mean(2, keepdim=True).expand_as(snr_features)
-        correction = self.correction(torch.cat((features, symmetric_context,
-                                                snr_features, snr_context), -1).float())
-        correction = correction.reshape(batch, 3, NUM_UE, NUM_RX, NUM_TX, 2)
-        correction = _complex(correction[..., 0], correction[..., 1])
-        correction = correction.reshape(batch, 3, NUM_UE * NUM_RX, NUM_TX)
-        w = w + 0.1 * correction.transpose(-2, -1)               # B,3,T,4
-        pair = torch.stack((snr_bu.min(1).values, snr_bu.max(1).values,
-                            snr_bu[:, 0] - snr_bu[:, 1]), -1)    # B,3
-        log_gains = self.gain_head(torch.cat((pair, _snr_features(snr_bu)), -1).float())
-        w = w * torch.exp(log_gains)[:, None, None, :]           # ratios, zero-init = identity
-        w_re = w[:, sub]                                         # B,144,T,4
-        w_re = w_re / w_re.abs().square().sum((-2, -1), keepdim=True).clamp_min(1e-12).sqrt()
-        return w_re
-
-
-class Precoder(nn.Module):
     """Four-stream robust RZF with a UE-shared, permutation-equivariant residual.
 
     Stream order inside each UE follows its two observed receive antennas.
@@ -306,6 +230,10 @@ class Precoder(nn.Module):
                                         nn.Linear(64, 64))
         nn.init.zeros_(self.correction[-1].weight)
         nn.init.zeros_(self.correction[-1].bias)
+        self.gain_head = nn.Sequential(nn.Linear(6, 64), nn.GELU(),
+                                       nn.Linear(64, NUM_UE * NUM_RX))
+        nn.init.zeros_(self.gain_head[-1].weight)
+        nn.init.zeros_(self.gain_head[-1].bias)
 
     def forward(self, h_hat, snr):
         # h_hat: [B, UE, RX, TX, RE], snr: [UE, B].
@@ -335,6 +263,11 @@ class Precoder(nn.Module):
         correction = _complex(correction[..., 0], correction[..., 1])
         correction = correction.reshape(batch, NUM_RE, NUM_UE * NUM_RX, NUM_TX)
         w = w + 0.1 * correction.transpose(-2, -1)
+        snr_bu = snr.transpose(0, 1).float()
+        pair = torch.stack((snr_bu.min(1).values, snr_bu.max(1).values,
+                            snr_bu[:, 0] - snr_bu[:, 1]), -1)
+        log_gains = self.gain_head(torch.cat((pair, _snr_features(snr_bu).mean(1)), -1).float())
+        w = w * torch.exp(log_gains)[:, None, None, :]           # stream power ratios
         return w / w.abs().square().sum((-2, -1), keepdim=True).clamp_min(1e-12).sqrt()
 
 
