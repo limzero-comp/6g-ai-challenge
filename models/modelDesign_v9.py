@@ -20,15 +20,16 @@ MODEL_VARIANT = "v3"
 NUM_RE = 144
 NUM_BITS = 1152
 
-# v9: receiver P0 combo from third_party codebase notes (neural_rx / ofdm-plutosdr).
-# Air interface identical to v3. Receiver changes only:
-#   1) per-sample measured y RMS added as a scalar feature (data-driven
-#      normalisation alongside v3's model-derived y_scale);
-#   2) auxiliary channel readout head: Linear(hidden) -> own-h reconstruction,
-#      exposed as self.aux_h_hat for the training loop's 0.02xMSE auxiliary
-#      loss (neural_rx's double_readout -- documented to speed convergence and
-#      improve the effective-channel gap). Warm start: old embed columns kept,
-#      +2 new columns small-random; readout head fresh.
+# v9: v3 air interface + neural_rx-style iterative state receiver (learned
+# from third_party/e2e_receiver/neural_rx). Per-sample y power normalisation;
+# the v3 backbone becomes the StateInit stack; K=4 separate-weight update
+# iterations (separable conv, residual skip) refine the state; LLR + channel
+# readouts at every iteration feed a multiloss during training (BCE + 0.02 x
+# MSE on the channel readout). Warm start: embed/blocks/output match v3
+# exactly; iteration-1 LLRs equal v3's LLRs at init because the fresh update
+# layers are zero-initialised on their residual path.
+
+
 NUM_FEEDBACK = 96
 NUM_TX = 16
 NUM_RX = 2
@@ -344,43 +345,104 @@ class Transmitter(nn.Module):
         return x, ctrl
 
 
-class Receiver(nn.Module):
-    """Blind neural receiver, conditioned exclusively on official RX inputs.
+"""v9: v3 air interface + neural_rx-style iterative state receiver.
 
-    Global processing can infer effective stream mixing from the received block.
-    No analytical equalizer uses a privileged effective channel or true W.
-    Calibration of this blind inference is an experimental risk to validate.
-    """
+Learned from third_party/e2e_receiver/neural_rx (NVIDIA, GLOBECOM'23):
+
+  - per-sample power normalisation of y (CGNN.call:791-810);
+  - the hidden state is initialised once and then refined by K UPDATE
+    ITERATIONS, each a separate-weight separable-conv stack with a residual
+    skip (StateInit / UpdateState);
+  - readouts (LLRs + channel estimate) are taken at every iteration during
+    training with a multiloss (BCE per iteration + 0.02 x MSE on the channel
+    readout, apply_multiloss / double_readout), documented to speed
+    convergence and close the effective-channel gap;
+  - weight sharing across iterations degrades performance (their remark) --
+    each iteration owns its weights here too.
+
+Adaptations to our 1x144 single-symbol geometry: SeparableConv2D(3x3)
+degenerates to depthwise Conv1d(k=3) + pointwise Conv1d(1); H is known at the
+RX so no pilot positional map is needed (v3's sinusoidal position buffer is
+kept); the other-user aggregation layer is omitted (neural_rx's own
+single-user config shows it is optional).
+
+Warm start contract: embed/blocks/output weights match v3 exactly; the
+iteration-1 readout is v3's output layer, so iteration-1 LLRs are v3's LLRs
+when the fresh iteration layers are zero-initialised (graceful start).
+"""
+import math
+
+import torch
+from torch import nn
+
+# The file is assembled from v3, so constants/classes below this line come
+# from the v3 source (assembled by the build script). Reference markers:
+# NUM_BITS = 1152 and the class definitions are provided by the base file.
+
+
+class _SepConv1d(nn.Module):
+    """Separable conv: depthwise k=3 + pointwise, the 1x144 degeneration of
+    SeparableConv2D(3x3). No padding on the last RE (v3 blocks use the same
+    left-aligned convention via _LocalBlock's depthwise padding=1)."""
+
+    def __init__(self, width, activation=True):
+        super().__init__()
+        self.depthwise = nn.Conv1d(width, width, 3, padding=1, groups=width)
+        self.pointwise = nn.Conv1d(width, width, 1)
+        self.act = nn.GELU() if activation else nn.Identity()
+
+    def forward(self, x):                       # x [B, F, W]
+        return self.act(self.pointwise(self.depthwise(x.transpose(1, 2))).transpose(1, 2))
+
+
+class UpdateIteration(nn.Module):
+    """One neural_rx UpdateState: [s] -> sepconv stack -> residual skip, plus
+    the iteration's LLR and channel readouts."""
+
+    def __init__(self, width):
+        super().__init__()
+        self.conv1 = _SepConv1d(width)
+        self.conv2 = _SepConv1d(width)
+        self.readout_llr = nn.Sequential(nn.LayerNorm(width), nn.Linear(width, 8))
+        self.readout_chest = nn.Linear(width, NUM_RX * NUM_TX * 2)   # re/im of normalised h
+        nn.init.zeros_(self.conv2.pointwise.weight)
+        nn.init.zeros_(self.conv2.pointwise.bias)
+
+    def forward(self, s):
+        z = self.conv2(self.conv1(s)) + s       # residual state update
+        llr = self.readout_llr(z).reshape(s.shape[0], NUM_BITS).float()
+        chest = self.readout_chest(z)           # [B, F, R*T*2] re/im
+        return z, llr, chest
+
+
+class Receiver(nn.Module):
+    """neural_rx-style iterative receiver, warm-startable from v3."""
+
     def __init__(self):
         super().__init__()
         width = 96
-        self.embed = nn.Linear(64 + 4 + 2 + 3 + 5 + 1 + 2, width)
+        self.embed = nn.Linear(64 + 4 + 2 + 3 + 5 + 1, width)
         position = torch.arange(NUM_RE).float()[:, None]
         frequency = torch.exp(torch.arange(0, width, 2).float() * (-math.log(10000.0) / width))
         pe = torch.zeros(NUM_RE, width)
         pe[:, 0::2] = torch.sin(position * frequency)
         pe[:, 1::2] = torch.cos(position * frequency)
         self.register_buffer("position", 0.02 * pe[None])
-        blocks = [_LocalBlock(width), _LocalBlock(width), _GlobalBlock(width), _GlobalBlock(width)]
-        if MODEL_VARIANT != "v1":
-            blocks.append(_GlobalBlock(width))
-        self.blocks = nn.Sequential(*blocks)
+        # v3 backbone becomes the StateInit stack.
+        self.blocks = nn.Sequential(_LocalBlock(width), _LocalBlock(width),
+                                    _GlobalBlock(width), _GlobalBlock(width),
+                                    _GlobalBlock(width))
+        # Iteration-1 readout == v3's output layer (warm start).
         self.output = nn.Sequential(nn.LayerNorm(width), nn.Linear(width, 8))
-        # Auxiliary channel readout (neural_rx double_readout): reconstruct the
-        # RX's own per-RE channel magnitude from the same hidden states.
-        self.readout_chest = nn.Sequential(nn.LayerNorm(width), nn.Linear(width, NUM_RX * NUM_TX))
-        self.aux_h_hat = None
-        self.aux_history = []            # last two UEs' readouts (link calls per UE)
+        self.iterations = nn.ModuleList([UpdateIteration(width) for _ in range(6)])
+        self.num_iterations = len(self.iterations)
+        self.iter_llrs = []
+        self.iter_chests = []
 
     def valid_lengths(self, snr, ctrl=None):
         return valid_lengths(snr, ctrl)
 
     def forward_full(self, y, h, ctrl_bits, snr):
-        """Return [B,1152] logits; training must mask entries past valid_lengths.
-
-        For v2 those masked coordinates are undefined predictions, not bits
-        claimed to be transmitted. Official forward returns the actual prefix.
-        """
         batch = y.shape[0]
         if tuple(y.shape) != (batch, NUM_RX, NUM_RE):
             raise ValueError("Receiver expects y [batch, 2, 144].")
@@ -391,32 +453,41 @@ class Receiver(nn.Module):
         snr = _snr_vector(snr, batch, y.device)
         h = h.to(torch.complex64)
         y = y.to(torch.complex64)
-        h_scale = h.abs().square().mean((1, 2)).clamp_min(1e-10).sqrt()  # B,F
+
+        # Per-sample power normalisation (neural_rx CGNN.call).
+        y_rms = y.abs().square().mean((1, 2)).clamp_min(1e-10).sqrt()       # B
+        y = y / y_rms[:, None, None]
+
+        h_scale = h.abs().square().mean((1, 2)).clamp_min(1e-10).sqrt()     # B,F
         noise = torch.pow(10.0, -snr / 10.0)
         y_scale = (NUM_TX * h_scale.square() + noise[:, None]).clamp_min(1e-10).sqrt()
         h_features = _channel_features(h / h_scale[:, None, None]).transpose(1, 2)
         y_unit = (y / y_scale[:, None]).transpose(1, 2)
         y_features = torch.cat((y_unit.real, y_unit.imag), -1)
-        # Measured per-sample y RMS (data-driven complement to y_scale).
-        y_rms = y.abs().square().mean((1, 2)).clamp_min(1e-10).sqrt()      # B
-        y_rms_re = y_rms[:, None].expand(-1, NUM_RE)
-        scale_features = torch.stack((h_scale.log(), y_scale.log(), y_rms_re.log(),
-                                      (y_rms_re / y_scale).log()), -1)
+        scale_features = torch.stack((h_scale.log(), y_scale.log()), -1)
         lengths = self.valid_lengths(snr, ctrl_bits)
         condition = torch.cat((_snr_features(snr), ctrl_bits.float(),
                                lengths[:, None].float() / NUM_BITS), -1)
         condition = condition[:, None].expand(-1, NUM_RE, -1)
         features = torch.cat((h_features, y_features, scale_features, condition), -1).float()
-        hidden = self.embed(features) + self.position
-        hidden = self.blocks(hidden)
-        # Aux channel readout: |h_hat| per (rx, tx) against |h| truth.
-        chest = self.readout_chest(hidden)                                  # B,F,R*T
-        chest = chest.reshape(batch, NUM_RE, NUM_RX, NUM_TX).permute(0, 2, 3, 1)
-        self.aux_h_hat = (chest.abs() * h_scale[:, None, None, :]).to(torch.complex64)
-        if len(self.aux_history) >= 2:
-            self.aux_history.pop(0)
-        self.aux_history.append(self.aux_h_hat)
-        return self.output(hidden).reshape(batch, NUM_BITS).float()
+
+        # StateInit == v3 backbone (warm start).
+        s = self.embed(features) + self.position
+        s = self.blocks(s)
+
+        # K update iterations; readouts at every iteration for the multiloss.
+        self.iter_llrs = []
+        self.iter_chests = []
+        logits = None
+        for it_module in self.iterations:
+            s, llr_it, chest_it = it_module(s)
+            logits = llr_it
+            self.iter_llrs.append(llr_it)
+            # Channel readout: magnitude of own h, normalised by h_scale
+            # (neural_rx readouts operate on normalised quantities).
+            self.iter_chests.append(chest_it.abs() / h_scale[:, :, None].clamp_min(1e-10))
+        self.iter_chests_final = self.iter_chests[-1]
+        return logits
 
     def forward(self, y, h, ctrl_bits, snr):
         snr = _snr_vector(snr, y.shape[0], y.device)
@@ -424,7 +495,4 @@ class Receiver(nn.Module):
         if not torch.equal(lengths, lengths[:1].expand_as(lengths)):
             raise ValueError("Mixed prefix lengths cannot form an official dense LLR batch. "
                              "Use batch_size=1, bucket by rate, or forward_full plus valid_lengths.")
-        logits = self.forward_full(y, h, ctrl_bits, snr)
-        if MODEL_VARIANT != "v2":
-            return logits
-        return logits[:, :int(lengths[0].item())]
+        return self.forward_full(y, h, ctrl_bits, snr)

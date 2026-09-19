@@ -80,6 +80,12 @@ def main():
         loss, stats = objective(bits, logits, lengths,
                                 score_weight=ramp * config.get("score_weight", 0.1),
                                 tail_weight=ramp * config.get("tail_weight", 0.03))
+        # neural_rx multiloss: BCE at every iteration (equal weight), so the
+        # state is supervised from the first update onward.
+        iter_llrs = list(link.receiver.iter_llrs)[:-1]     # last is `logits`
+        for llr_it in iter_llrs:
+            extra, _ = objective(bits, [llr_it], lengths, score_weight=0.0, tail_weight=0.0)
+            loss = loss + extra / max(1, len(iter_llrs) + 1)
         csi_weight = config.get("csi_weight", 0.01)
         if csi_weight:
             estimate = aux["h_hat"]
@@ -88,10 +94,16 @@ def main():
             loss = loss + csi_weight * nmse.mean()
             stats["csi_nmse"] = float(nmse.mean().detach())
         if aux_weight:
-            hists = list(link.receiver.aux_history)   # [ue0, ue1] readouts
-            link.receiver.aux_history.clear()
-            chest_losses = [(hists[ue].abs() - h[:, ue].abs()).square().mean()
-                            for ue in range(min(2, len(hists)))]
+            hists = list(link.receiver.iter_chests)   # per-iteration [B,RE,R*T*2] re/im
+            link.receiver.iter_llrs, link.receiver.iter_chests = [], []
+            # normalised complex target: h / rms(|h|) per sample, re/im layout
+            # [B, RE, (R,T,2)] matching the readout ordering.
+            h_own = h[:, 1]
+            scale = h_own.abs().square().mean((1, 2, 3)).clamp_min(1e-10).sqrt()
+            h_n = (h_own / scale[:, None, None, None])
+            ref = torch.cat((h_n.real, h_n.imag), dim=-1).permute(0, 3, 1, 2) \
+                .reshape(h.shape[0], 144, NUM_RX * 16 * 2)
+            chest_losses = [(c - ref).square().mean() for c in hists]
             stats["chest_nmse"] = float(chest_losses[-1].detach())
             loss = loss + aux_weight * sum(chest_losses) / len(chest_losses)
         if not bool(torch.isfinite(loss)):

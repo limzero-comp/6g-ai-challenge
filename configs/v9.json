@@ -15,5 +15,6 @@
   "eval_batch_size": 16,
   "log_every": 100,
   "ema_decay": 0.999,
-  "aux_chest_weight": 0.02
+  "aux_chest_weight": 0.02,
+  "warm_start": "experiments/v3_long_mps/best_ema"
 }
