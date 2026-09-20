@@ -1,0 +1,79 @@
+{
+  "step": 1000,
+  "efficiency": 68.83231353759766,
+  "fairness_p10": 49.21875,
+  "score": 62.94824447631836,
+  "channel_rows": 2000,
+  "repeats": 2,
+  "seed": 314159,
+  "batch_size": 16,
+  "seconds": 4.765182624993031,
+  "pairing_note": "Use identical rows, seed, repeats AND batch_size for paired model comparison",
+  "milliseconds_per_two_user_block": 1.1912956562482577,
+  "timing_note": "Includes data transfer/loading; hardware-specific, not platform timing",
+  "per_user": [
+    {
+      "efficiency": 68.89105224609375,
+      "fairness_p10": 49.13194274902344,
+      "score": 62.96331939697265
+    },
+    {
+      "efficiency": 68.77356719970703,
+      "fairness_p10": 49.21875,
+      "score": 62.90712203979492
+    }
+  ],
+  "snr_bins": {
+    "[-20,-15)": {
+      "efficiency": 50.431400299072266,
+      "fairness_p10": 48.25520706176758,
+      "score": 49.77854232788086,
+      "count": 990
+    },
+    "[-15,-10)": {
+      "efficiency": 51.76329040527344,
+      "fairness_p10": 48.52430725097656,
+      "score": 50.791595458984375,
+      "count": 971
+    },
+    "[-10,-5)": {
+      "efficiency": 54.69498062133789,
+      "fairness_p10": 48.4375,
+      "score": 52.81773643493652,
+      "count": 987
+    },
+    "[-5,0)": {
+      "efficiency": 58.96098327636719,
+      "fairness_p10": 48.69791793823242,
+      "score": 55.882063674926755,
+      "count": 989
+    },
+    "[0,5)": {
+      "efficiency": 71.83467102050781,
+      "fairness_p10": 52.456600189208984,
+      "score": 66.02124977111816,
+      "count": 1044
+    },
+    "[5,10)": {
+      "efficiency": 83.27974700927734,
+      "fairness_p10": 73.61111450195312,
+      "score": 80.37915725708007,
+      "count": 1001
+    },
+    "[10,15)": {
+      "efficiency": 88.22490692138672,
+      "fairness_p10": 80.64236450195312,
+      "score": 85.95014419555663,
+      "count": 1046
+    },
+    "[15,20)": {
+      "efficiency": 90.05272674560547,
+      "fairness_p10": 84.375,
+      "score": 88.34940872192382,
+      "count": 972
+    }
+  },
+  "prefix_lengths": {
+    "1152": 8000
+  }
+}

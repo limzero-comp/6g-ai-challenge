@@ -1,0 +1,79 @@
+{
+  "step": 4000,
+  "efficiency": 68.7811279296875,
+  "fairness_p10": 49.21875,
+  "score": 62.91241455078125,
+  "channel_rows": 2000,
+  "repeats": 2,
+  "seed": 314159,
+  "batch_size": 16,
+  "seconds": 4.418418541987194,
+  "pairing_note": "Use identical rows, seed, repeats AND batch_size for paired model comparison",
+  "milliseconds_per_two_user_block": 1.1046046354967984,
+  "timing_note": "Includes data transfer/loading; hardware-specific, not platform timing",
+  "per_user": [
+    {
+      "efficiency": 68.8172836303711,
+      "fairness_p10": 49.13194274902344,
+      "score": 62.91168136596679
+    },
+    {
+      "efficiency": 68.74498748779297,
+      "fairness_p10": 49.21875,
+      "score": 62.887116241455075
+    }
+  ],
+  "snr_bins": {
+    "[-20,-15)": {
+      "efficiency": 50.50373077392578,
+      "fairness_p10": 48.4375,
+      "score": 49.88386154174805,
+      "count": 990
+    },
+    "[-15,-10)": {
+      "efficiency": 51.717430114746094,
+      "fairness_p10": 48.4375,
+      "score": 50.73345108032226,
+      "count": 971
+    },
+    "[-10,-5)": {
+      "efficiency": 54.66481018066406,
+      "fairness_p10": 48.52430725097656,
+      "score": 52.82265930175781,
+      "count": 987
+    },
+    "[-5,0)": {
+      "efficiency": 59.01241683959961,
+      "fairness_p10": 48.69791793823242,
+      "score": 55.91806716918945,
+      "count": 989
+    },
+    "[0,5)": {
+      "efficiency": 71.72940826416016,
+      "fairness_p10": 52.109375,
+      "score": 65.8433982849121,
+      "count": 1044
+    },
+    "[5,10)": {
+      "efficiency": 83.19293212890625,
+      "fairness_p10": 73.26388549804688,
+      "score": 80.21421813964844,
+      "count": 1001
+    },
+    "[10,15)": {
+      "efficiency": 88.1521224975586,
+      "fairness_p10": 80.42534637451172,
+      "score": 85.83408966064452,
+      "count": 1046
+    },
+    "[15,20)": {
+      "efficiency": 89.86268615722656,
+      "fairness_p10": 83.77604675292969,
+      "score": 88.0366943359375,
+      "count": 972
+    }
+  },
+  "prefix_lengths": {
+    "1152": 8000
+  }
+}
